@@ -1,0 +1,20 @@
+Interpolation (informally: "filling in the gaps between known values") is an essential operation in computer graphics. We will use it time and time again in this unit (for various different purposes). It is essential that we become familiar with the basic principles - we are going to need to interpolate some pretty complex constructs later on !
+
+For the time being, let us start simply: create a duplicate of the _RedNoise_ template (giving the new project a suitable name) and then add a new function called `interpolateSingleFloats` that takes 3 parameters:
+- `from` - a floating point number to start from
+- `to` - a floating point number to go up to
+- `numberOfValues` - the number of steps required from the start to the end
+
+This function should return an **evenly spaced** list (as a vector) of size `numberOfValues` that contains floating point numbers that start at `from` and ends at `to`. So, for example, calling: `interpolateSingleFloats(2.2, 8.5, 7)` should return a vector containing the following values: `2.2 3.25 4.3 5.35 6.4 7.45 8.5`. You might like to take a look at 
+<a href="https://www.tutorialspoint.com/cpp_standard_library/cpp_vector_push_back.htm" target="_blank">this tutorial</a> on using vectors in C++ in order to get you started.
+
+Once written, test out your function to make sure it correctly prints out the values from the above example. Do this by adding the following code to your project's main function:
+
+``` cpp
+std::vector<float> result;
+result = interpolateSingleFloats(2.2, 8.5, 7);
+for(size_t i=0; i<result.size(); i++) std::cout << result[i] << " ";
+std::cout << std::endl;
+```
+
+Note that `std::cout` refers to the character output object of the standard library and that `std::endl` is a flushed newline. It is also worth commenting that `size_t` is an unsigned integer type provided by C++ that is useful for comparing the size of things (like vectors).
