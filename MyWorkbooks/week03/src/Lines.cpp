@@ -20,13 +20,12 @@ uint32_t colourToCode(Colour colour)
 	return (255 << 24) + (colour.blue << 16) + (colour.green << 8) + (colour.red);
 }
 
-vector<float> interpolate1D(float x, float y, int n)
+vector<float> increment1D(float x, float y)
 {
 	vector<float> result;
-	float delta = (y - x) / (n - 1);
-	for (int i = 0; i < n; i++)
+	for (int i = 0; i < (y - x); i++)
 	{
-		result.push_back(x + (i * delta));
+		result.push_back(x + i);
 	}
 	return result;
 }
@@ -71,11 +70,11 @@ vector<CanvasPoint> sortPointsByY(CanvasPoint a, CanvasPoint b, CanvasPoint c)
 	vector<CanvasPoint> ps = {a, b, c};
 
 	if (ps[0].y > ps[1].y)
-		swap(ps[0].y, ps[1].y);
+		swap(ps[0], ps[1]);
 	if (ps[0].y > ps[2].y)
-		swap(ps[0].y, ps[2].y);
+		swap(ps[0], ps[2]);
 	if (ps[1].y > ps[2].y)
-		swap(ps[1].y, ps[2].y);
+		swap(ps[1], ps[2]);
 	return ps;
 }
 
@@ -88,6 +87,10 @@ float findAtY(vector<CanvasPoint> line, float height)
 			return line[i].x;
 		}
 	}
+	std::
+			cout
+		<< "finAtY didn't return";
+	return -1;
 }
 
 void printCPVector(vector<CanvasPoint> cps)
@@ -110,38 +113,59 @@ void fillTriangle(DrawingWindow &window, CanvasPoint a, CanvasPoint b, CanvasPoi
 	vector<float> xs = {a.x, b.x, c.x};
 	xs = sort3(xs);
 
+	// std::cout << std::endl
+	// 		  << "unsorted points:";
+	// printCPVector({a, b, c});
+
 	vector<CanvasPoint> ps = sortPointsByY(a, b, c);
+
+	// std::cout << std::endl
+	// 		  << "sorted points:";
+	// printCPVector(ps);
+	// std::cout << "Colour code: " << colour.red << "," << colour.green << "," << colour.blue << std::endl;
 
 	// iterate from the top to the bottom of the triangle
 	// if above the middle value, then treat like one triangle, otherwise like the other
 
-	vector<float> ySpectrum = interpolate1D(ys[0], ys[2], ys[2] - ys[0]); // vector from the top to the bottom
+	vector<float>
+		ySpectrum = increment1D(ys[0], ys[2]); // vector from the top to the bottom
 
 	vector<CanvasPoint> lineAD = interpolate2D(ps[0], ps[2]);
 
 	vector<CanvasPoint> lineA;
 	vector<CanvasPoint> lineD;
 	CanvasPoint middle;
-	for (int i = 0; i < lineAD.size(); i++)
-	{
-		if (lineAD[i].y == ps[1].y)
-		{
-			middle = lineAD[i];
 
-			lineA = interpolate2D(ps[0], middle);
-			lineD = interpolate2D(middle, ps[2]);
+	if (ps[0].y == ps[1].y || ps[1].y == ps[1].y)
+	{
+		lineA = lineAD;
+		lineD = lineAD;
+	}
+	else
+	{
+		for (int i = 0; i < lineAD.size(); i++)
+		{
+			if (round(lineAD[i].y) == round(ps[1].y))
+			{
+				middle = lineAD[i];
+
+				lineA = interpolate2D(ps[0], middle);
+				lineD = interpolate2D(middle, ps[2]);
+			}
 		}
 	}
 
 	vector<CanvasPoint> lineB = interpolate2D(ps[0], ps[1]);
 	vector<CanvasPoint> lineC = interpolate2D(ps[1], ps[2]);
 
+	std::cout << "Line AD: ";
+	printCPVector(lineAD);
 	std::cout << "Line A: ";
 	printCPVector(lineA);
-	std::cout << "Line B: ";
-	printCPVector(lineB);
-	std::cout << "Line C: ";
-	printCPVector(lineC);
+	// std::cout << "Line B: ";
+	// printCPVector(lineB);
+	// std::cout << "Line C: ";
+	// printCPVector(lineC);
 	std::cout << "Line D: ";
 	printCPVector(lineD);
 
@@ -151,7 +175,7 @@ void fillTriangle(DrawingWindow &window, CanvasPoint a, CanvasPoint b, CanvasPoi
 		std::cout << ySpectrum[h] << ",";
 		float xA;
 		float xB;
-		if (ySpectrum[h] < ys[1])
+		if (ySpectrum[h] < ys[1] && lineA.size() > 0 && lineB.size() > 0)
 		{ // if we are above the middle
 			// is the pixel in the triangle
 			xA = findAtY(lineB, ySpectrum[h]);
@@ -164,7 +188,7 @@ void fillTriangle(DrawingWindow &window, CanvasPoint a, CanvasPoint b, CanvasPoi
 		}
 		for (int w = 0; w < window.width; w++)
 		{
-			if (w >= xA && w <= xB)
+			if ((w >= xA && w <= xB) || (w <= xA && w >= xB))
 			{
 				window.setPixelColour(round(w), round(ySpectrum[h]), colourCode);
 			}
@@ -184,12 +208,11 @@ void drawLine(DrawingWindow &window, CanvasPoint start, CanvasPoint end, Colour 
 	}
 }
 
-void drawTriangle(DrawingWindow &window, CanvasPoint a, CanvasPoint b, CanvasPoint c)
+void drawTriangle(DrawingWindow &window, CanvasPoint a, CanvasPoint b, CanvasPoint c, Colour colour)
 {
-	Colour random(rand() % 256, rand() % 256, rand() % 256);
-	drawLine(window, a, b, random);
-	drawLine(window, b, c, random);
-	drawLine(window, c, a, random);
+	drawLine(window, a, b, colour);
+	drawLine(window, b, c, colour);
+	drawLine(window, c, a, colour);
 }
 
 void randomTriangle(DrawingWindow &window)
@@ -199,6 +222,7 @@ void randomTriangle(DrawingWindow &window)
 	CanvasPoint c(rand() % window.width, rand() % window.height);
 
 	Colour random(rand() % 256, rand() % 256, rand() % 256);
+	drawTriangle(window, a, b, c, random);
 	fillTriangle(window, a, b, c, random);
 }
 
@@ -216,6 +240,8 @@ void handleEvent(SDL_Event event, DrawingWindow &window)
 			std::cout << "DOWN" << std::endl;
 		else if (event.key.keysym.sym == SDLK_u)
 			randomTriangle(window);
+		else if (event.key.keysym.sym == SDLK_c)
+			window.clearPixels();
 	}
 	else if (event.type == SDL_MOUSEBUTTONDOWN)
 	{
@@ -231,11 +257,12 @@ int main()
 	CanvasPoint topLeft(0.0, 0.0);
 	CanvasPoint middle(window.width / 2, window.height / 2);
 
+	fillTriangle(window, CanvasPoint(round(window.width / 2), 390), CanvasPoint(10, round(window.height / 2)), CanvasPoint(round(window.width / 2), round(window.height / 2)), Colour(255, 255, 255));
 	while (true)
 	{
 		if (window.pollForInputEvents(event))
 			handleEvent(event, window);
-		drawLine(window, topLeft, middle, Colour(255, 0, 0));
+		//drawLine(window, topLeft, middle, Colour(255, 0, 0));
 		window.renderFrame();
 	}
 }
