@@ -1,0 +1,3 @@
+Now that we have a function that can map/project a 3D vertex onto a 2D canvas point, it becomes possible to actually display a render of a 3D model !
+
+We start with the simplest render possible - a "pointcloud". Using your `getCanvasIntersectionPoint` function, calculate the canvas positions of each vertex of the previously loaded Cornell Box. If you draw a single white pixel at each projected canvas point, you should end up with a pointcloud render that looks like the image shown below. Although very minimalistic, with a bit of imagination you can see the room corners and boxes from the sample model.

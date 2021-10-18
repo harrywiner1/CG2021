@@ -1,0 +1,7 @@
+To read in the data from the geometry file, you might like to make use of an <a href="https://www.cplusplus.com/reference/fstream/ifstream/" target="_blank">ifstream</a> and make calls to the 
+<a href="https://www.cplusplus.com/reference/istream/istream/getline/" target="_blank">getline</a>
+function. A `split` function has also been provided (see the `Utils` class in libs/sdw) to make tokenising of lines easier. But it is really up to you how you choose to parse in the files.
+
+Just to reiterate - this unit is about graphical rendering, not grammars and parsing. As such you should keep your OBJ parser as simple as possible. It is important to remember that we will NOT be testing the robustness of your parser by throwing it challenging or malformed geometry files. Only implement the aspects of the OBJ file format that you need to complete the tasks at hand. Your parser only needs to be "good enough" to load in the sample OBJ geometry file provided above (and any other models that YOU choose to use).
+
+When loading in the Cornell Box model, we suggest you use a scaling factor of 0.17 since this will bring the all dimensions of the vertices within the range of -1.0 to 1.0 (which seems sensible and logical).
