@@ -113,16 +113,7 @@ void fillTriangle(DrawingWindow &window, CanvasPoint a, CanvasPoint b, CanvasPoi
 	vector<float> xs = {a.x, b.x, c.x};
 	xs = sort3(xs);
 
-	// std::cout << std::endl
-	// 		  << "unsorted points:";
-	// printCPVector({a, b, c});
-
 	vector<CanvasPoint> ps = sortPointsByY(a, b, c);
-
-	// std::cout << std::endl
-	// 		  << "sorted points:";
-	// printCPVector(ps);
-	// std::cout << "Colour code: " << colour.red << "," << colour.green << "," << colour.blue << std::endl;
 
 	// iterate from the top to the bottom of the triangle
 	// if above the middle value, then treat like one triangle, otherwise like the other
@@ -157,17 +148,6 @@ void fillTriangle(DrawingWindow &window, CanvasPoint a, CanvasPoint b, CanvasPoi
 
 	vector<CanvasPoint> lineB = interpolate2D(ps[0], ps[1]);
 	vector<CanvasPoint> lineC = interpolate2D(ps[1], ps[2]);
-
-	std::cout << "Line AD: ";
-	printCPVector(lineAD);
-	std::cout << "Line A: ";
-	printCPVector(lineA);
-	// std::cout << "Line B: ";
-	// printCPVector(lineB);
-	// std::cout << "Line C: ";
-	// printCPVector(lineC);
-	std::cout << "Line D: ";
-	printCPVector(lineD);
 
 	std::cout << "ySpectrum: ";
 	for (int h = 0; h < ySpectrum.size(); h++)
