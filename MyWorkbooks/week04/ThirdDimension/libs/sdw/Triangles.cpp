@@ -167,7 +167,7 @@ void fillTriangle(DrawingWindow &window, CanvasPoint a, CanvasPoint b, CanvasPoi
 		{
 			int x = round(w);
 			int y = round(ySpectrum[h]);
-			if (((w >= xA && w <= xB) || (w <= xA && w >= xB)) && (x >= 0 && x <= window.width) && (y >= 0 && y <= window.height))
+			if (((w >= xA && w <= xB) || (w <= xA && w >= xB)) && (x >= 0 && x < window.width) && (y >= 0 && y < window.height))
 			{
 				window.setPixelColour(x, y, colourCode);
 			}
@@ -183,7 +183,11 @@ void drawLine(DrawingWindow &window, CanvasPoint start, CanvasPoint end, Colour 
 	vector<CanvasPoint> line = interpolate2D(start, end);
 	for (int i = 0; i < line.size(); i++)
 	{
-		window.setPixelColour(round(line[i].x), round(line[i].y), colourCode);
+		int x = round(line[i].x);
+		int y = round(line[i].y);
+
+		if ((x >= 0 && x < window.width) && (y >= 0 && y < window.height))
+			window.setPixelColour(x, y, colourCode);
 	}
 }
 
