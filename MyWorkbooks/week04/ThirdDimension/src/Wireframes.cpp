@@ -288,7 +288,6 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 cameraPos, glm::vec3 ra
 
 int draw(vector<ModelTriangle> triangles, float focalLength, glm::vec3 &cameraPos, glm::mat3 cameraOri, DrawingWindow &window, int t)
 {
-	//orbit(cameraPos, glm::vec3(0, 0, 0), .01);
 	if (drawMode == WIREFRAME)
 		drawWireframes(triangles, focalLength, cameraPos, cameraOri, window);
 	else
