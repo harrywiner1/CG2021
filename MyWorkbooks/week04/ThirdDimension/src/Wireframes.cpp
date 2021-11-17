@@ -17,7 +17,15 @@
 #define UP 1
 #define FORWARD 2
 
+#define WIREFRAME 0
+#define RASTERISE 1
+#define RAYTRACE 2
+
+int drawMode = WIREFRAME;
+
 using namespace std;
+
+float theta = 0;
 
 void printCanvasPoint(CanvasPoint point)
 {
@@ -73,6 +81,8 @@ vector<ModelTriangle> readObj(string filename, float scale, std::map<string, Col
 {
 	// Create a text string, which is used to output the text file
 	string curLine;
+
+	// std::cout << filename << std::endl;
 
 	// Read from the text file
 	fstream MyReadFile(filename);
@@ -219,56 +229,40 @@ void rotateCamera(glm::mat3 &cameraOri, int direction, float magnitude)
 	//std::cout << cameraOri << std::endl;
 }
 
-/**
- * @brief returns the current angle
- * 
- * @param cameraPos 
- * @param radius 
- */
-void orbit(glm::vec3 &cameraPos, float radius, int t)
-{
-	if (cameraPos[2] == 0)
-	{
-		return;
-	}
-	float newAngle = (t * .01);
-	cameraPos[0] = radius * sin(newAngle);
-	cameraPos[2] = radius * cos(newAngle);
-	// std::cout << cameraPos[0] << "," << cameraPos[1] << "," << cameraPos[2] << "," << std::endl;
-}
-
-void orbit(glm::vec3 &cameraPos, glm::vec3 centre, float deltaRad)
-{
-
-	glm::vec3 distance = cameraPos - centre;
-	float radius = sqrt(distance[0] * distance[0] + distance[2] * distance[2]);
-	//float angle = asin(distance[2] / radius) - deltaRad;
-	float angle = atan(distance[2] / distance[0]) - deltaRad;
-	cameraPos[2] = radius * sin(angle);
-	cameraPos[0] = radius * cos(angle);
-	std::cout << glm::to_string(cameraPos) << ", distance: " << glm::to_string(distance) << ", angle: " << angle << ", radius: " << radius << std::endl;
-}
-
 void lookAt(glm::vec3 cameraPos, glm::mat3 &cameraOri, glm::vec3 subject)
 {
 	std::cout << "Mat before: " << glm::to_string(cameraOri) << std::endl;
 	std::cout << "Camerapos: " << glm::to_string(cameraPos) << std::endl;
-	glm::vec3 forward = cameraPos - subject;
+	glm::vec3 forward = glm::normalize(cameraPos - subject);
 
-	glm::vec3 right = glm::cross(glm::vec3(0, 1, 0), forward);
-	glm::vec3 up = glm::cross(forward, right);
+	glm::vec3 right = glm::normalize(glm::cross(glm::vec3(0, 1, 0), forward));
+	glm::vec3 up = glm::normalize(glm::cross(forward, right));
 
-	cameraOri = glm::transpose(glm::mat3(right, up, forward));
-	std::cout << "Mat after: " << glm::to_string(cameraOri) << std::endl;
+	//cameraOri = glm::transpose(glm::mat3(right, up, forward));
+	cameraOri = glm::mat3(right, up, forward);
+	std::cout
+		<< "Mat after: " << glm::to_string(cameraOri) << std::endl;
+}
+
+void orbit(glm::vec3 &cameraPos, glm::mat3 &cameraOri, glm::vec3 subject)
+{
+	float r = glm::distance(cameraPos, subject);
+	float dX = r * cos(theta);
+	float dZ = r * sin(theta);
+	cameraPos = glm::vec3(dX, cameraPos[1], dZ);
+	std::cout << "Delta Pos: " << glm::to_string(cameraPos) << std::endl;
+	std::cout << "dX: " << dX << "dZ: " << dZ << ", distance " << r << std::endl;
+	lookAt(cameraPos, cameraOri, subject);
+	theta += .1;
 }
 
 RayTriangleIntersection getClosestIntersection(glm::vec3 cameraPos, glm::vec3 rayDirection, vector<ModelTriangle> triangles)
 {
 	float minDistance = 10000;
+	RayTriangleIntersection minIntersection(glm::vec3(), 1000, triangles[0], 0);
 	for (ModelTriangle &triangle : triangles)
 	{
 
-		std::cout << "Min distance: " << minDistance << std::endl;
 		glm::vec3 e0 = triangle.vertices[1] - triangle.vertices[0];
 		glm::vec3 e1 = triangle.vertices[2] - triangle.vertices[0];
 		glm::vec3 SPVector = cameraPos - triangle.vertices[0];
@@ -276,24 +270,29 @@ RayTriangleIntersection getClosestIntersection(glm::vec3 cameraPos, glm::vec3 ra
 		glm::vec3 possibleSolution = glm::inverse(DEMatrix) * SPVector;
 
 		RayTriangleIntersection intersection(possibleSolution, possibleSolution[0], triangle, 0);
-
+		// std::cout << glm::to_string(possibleSolution) << ", " << glm::to_string(e0) << glm::to_string(e1) << glm::to_string(SPVector) << glm::to_string(glm::inverse(DEMatrix)) << std::endl;
 		float u = possibleSolution[1];
 		float v = possibleSolution[2];
 
 		if (intersection.distanceFromCamera >= 0 && u >= 0 && v >= 0 && u + v <= 1)
 		{
-			if (intersection.distanceFromCamera <= minDistance)
-				minDistance = intersection.distanceFromCamera;
+			std::cout << "Vintersection: " << glm::to_string(possibleSolution) << std::endl;
+			if (intersection.distanceFromCamera <= minIntersection.distanceFromCamera)
+				minIntersection = intersection;
 		}
-		std::cout << "Distance: " << intersection.distanceFromCamera << std::endl;
+		std::cout << "Distance: " << minIntersection.distanceFromCamera << std::endl;
 	}
+	std::cout << "Min distance: " << minIntersection.distanceFromCamera << std::endl;
+	return minIntersection;
 }
 
 int draw(vector<ModelTriangle> triangles, float focalLength, glm::vec3 &cameraPos, glm::mat3 cameraOri, DrawingWindow &window, int t)
 {
 	//orbit(cameraPos, glm::vec3(0, 0, 0), .01);
-	//render(triangles, focalLength, cameraPos, cameraOri, window);
-	drawWireframes(triangles, focalLength, cameraPos, cameraOri, window);
+	if (drawMode == WIREFRAME)
+		drawWireframes(triangles, focalLength, cameraPos, cameraOri, window);
+	else
+		render(triangles, focalLength, cameraPos, cameraOri, window);
 	return 0;
 }
 
@@ -325,6 +324,13 @@ void handleEvent(SDL_Event event, DrawingWindow &window, glm::vec3 &cameraPos, g
 			rotateCamera(cameraOri, FORWARD, -deltaRad);
 		else if (event.key.keysym.sym == SDLK_SPACE)
 			lookAt(cameraPos, cameraOri, glm::vec3(0, 0, 0));
+		else if (event.key.keysym.sym == SDLK_TAB)
+			orbit(cameraPos, cameraOri, glm::vec3(0, 0, 0));
+		else if (event.key.keysym.sym == SDLK_RIGHTBRACKET)
+		{
+			drawMode = (drawMode + 1) % 3;
+			std::cout << drawMode << std::endl;
+		}
 	}
 	else if (event.type == SDL_MOUSEBUTTONDOWN)
 	{
@@ -337,9 +343,9 @@ int main(int argc, char *argv[])
 {
 	DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 	SDL_Event event;
-	std::map<string, Colour> colours = readMTL("models/cornell-box.mtl");
-	vector<ModelTriangle> triangles = readObj("models/cornell-box.obj", .17, colours);
-
+	std::map<string, Colour> colours = readMTL("./models/cornell-box.mtl");
+	vector<ModelTriangle> triangles = readObj("./models/cornell-box.obj", .17, colours);
+	std::cout << triangles.size() << std::endl;
 	glm::vec3 cameraPos(0, 0, 4);
 	glm::mat3 cameraOri(glm::vec3(1, 0, 0),
 						glm::vec3(0, 1, 0),
@@ -348,14 +354,14 @@ int main(int argc, char *argv[])
 	int t = 0;
 	// drawWireframes(triangles, focalLength, cameraPos, window);
 	//drawPoints(triangles, focalLength, cameraPos, window);
-	getClosestIntersection(cameraPos, glm::vec3(0, 0, 0), triangles);
+	getClosestIntersection(cameraPos, glm::vec3(-0.1, -0.1, -2.0), triangles);
 	while (true)
 	{
 		// We MUST poll for events - otherwise the window will freeze !
 		window.clearPixels();
 		if (window.pollForInputEvents(event))
 			handleEvent(event, window, cameraPos, cameraOri);
-		//draw(triangles, focalLength, cameraPos, cameraOri, window, t);
+		draw(triangles, focalLength, cameraPos, cameraOri, window, t);
 		// Need to render the frame at the end, or nothing actually gets shown on the screen !
 		window.renderFrame();
 		t++;

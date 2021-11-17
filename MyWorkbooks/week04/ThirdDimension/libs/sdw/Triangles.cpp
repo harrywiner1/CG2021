@@ -167,7 +167,7 @@ void fillTriangle(DrawingWindow &window, CanvasPoint a, CanvasPoint b, CanvasPoi
 		{
 			int x = round(w);
 			int y = round(ySpectrum[h]);
-			if (((w >= xA && w <= xB) || (w <= xA && w >= xB)) && (x >= 0 && x < window.width) && (y >= 0 && y < window.height))
+			if (xA != -1 && xB != -1 && ((w >= xA && w <= xB) || (w <= xA && w >= xB)) && (x >= 0 && x < window.width) && (y >= 0 && y < window.height))
 			{
 				window.setPixelColour(x, y, colourCode);
 			}
